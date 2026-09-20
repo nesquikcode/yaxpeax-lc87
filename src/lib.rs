@@ -115,6 +115,10 @@ impl Instruction {
     pub fn operand(&self, idx: u8) -> Option<Operand> {
         self.operands.get(idx as usize).cloned()
     }
+
+    pub fn opcode_val(&self) -> Opcode {
+        self.opcode
+    }
 }
 
 impl LengthedInstruction for Instruction {
