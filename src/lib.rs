@@ -371,13 +371,20 @@ impl Decoder<LC87> for InstDecoder {
                 SUB,  SUBC, OR,   AND,
             ];
 
-            inst.opcode = LOW_OPCODE_TABLE[(word as usize) >> 4];
-            inst.with_operand(typical_operand_decode(word & 7, words)?);
-            if inst.opcode == MOV {
-                inst.with_operand(ImmU8 { imm: words.next()? });
-                let (op_0, op_1) = inst.operands.split_at_mut(1);
-                core::mem::swap(&mut op_0[0], &mut op_1[0]);
-            }
+                inst.opcode = LOW_OPCODE_TABLE[(word as usize) >> 4];
+                inst.with_operand(typical_operand_decode(word & 7, words)?);
+                if inst.opcode == MOV {
+                    inst.with_operand(ImmU8 { imm: words.next()? });
+                    let (op_0, op_1) = inst.operands.split_at_mut(1);
+                    core::mem::swap(&mut op_0[0], &mut op_1[0]);
+                } else if inst.opcode == BE || inst.opcode == BNE {
+                    if (word & 0x0f) == 2 {
+                        inst.with_operand(ImmU8 { imm: words.next()? });
+                    }
+                    inst.with_operand(BranchRelU12 { rel: words.next()? as u16 });
+                } else if inst.opcode == DBNZ || inst.opcode == DBZ {
+                    inst.with_operand(BranchRelU12 { rel: words.next()? as u16 });
+                }
         } else if low == 7 {
             const LOW_SEVEN_OPCODE_TABLE: [Opcode; 16] = [
                 LDW,    STW,    PUSHW,  POPW,
